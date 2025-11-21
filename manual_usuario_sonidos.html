@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Control de Sonidos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .section {
+            margin-bottom: 2rem;
+        }
+        .highlight {
+            background-color: #e9ecef;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body class="p-6 max-w-4xl mx-auto">
+
+    <header class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-blue-600 mb-2">Manual de Usuario</h1>
+        <h2 class="text-2xl font-semibold text-gray-700">Control de Sonidos</h2>
+        <p class="text-gray-600 mt-2">Versión 1.0 - Aplicación Web para Reproducir Sonidos Interactivos</p>
+    </header>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">1. Introducción</h3>
+        <p class="mb-4">
+            La aplicación <strong>Control de Sonidos</strong> es una herramienta web interactiva que permite reproducir una variedad de sonidos predefinidos mediante botones en pantalla. Está diseñada para ser utilizada en navegadores web modernos y ofrece funcionalidades como configuración personalizada, carga de archivos de audio personalizados y almacenamiento local de configuraciones.
+        </p>
+        <div class="highlight">
+            <strong>Características principales:</strong>
+            <ul class="list-disc list-inside mt-2">
+                <li>9 botones de sonido con presets predefinidos (risa, bocina, aplausos, etc.).</li>
+                <li>Configuración personalizable de etiquetas y sonidos.</li>
+                <li>Soporte para carga de archivos de audio personalizados (MP3, WAV, etc.).</li>
+                <li>Interfaz responsiva y moderna con diseño oscuro.</li>
+                <li>Almacenamiento automático de configuraciones en el navegador.</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">2. Requisitos del Sistema</h3>
+        <ul class="list-disc list-inside">
+            <li><strong>Navegador Web:</strong> Chrome, Firefox, Safari o Edge (versión reciente recomendada).</li>
+            <li><strong>Permisos:</strong> La aplicación requiere acceso al audio del navegador. Asegúrese de permitir el audio cuando se le solicite.</li>
+            <li><strong>Conexión a Internet:</strong> Necesaria para cargar las librerías externas (Tone.js y Tailwind CSS). Una vez cargada, puede funcionar sin conexión.</li>
+            <li><strong>Almacenamiento Local:</strong> Utiliza localStorage del navegador para guardar configuraciones. No se requieren permisos adicionales.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">3. Cómo Usar la Aplicación</h3>
+
+        <h4 class="text-lg font-semibold mb-2">3.1. Abrir la Aplicación</h4>
+        <p class="mb-4">
+            Abra el archivo <code>sonidos.html</code> en su navegador web. La página se cargará automáticamente y mostrará la interfaz principal con los botones de sonido.
+        </p>
+
+        <h4 class="text-lg font-semibold mb-2">3.2. Reproducir Sonidos</h4>
+        <p class="mb-4">
+            Haga clic en cualquiera de los botones de sonido en la cuadrícula principal. Cada botón reproducirá el sonido asignado. Los sonidos incluyen:
+        </p>
+        <ul class="list-disc list-inside mb-4">
+            <li>Risa 'Mala'</li>
+            <li>Bocina Fuerte</li>
+            <li>Aplausos (Clap)</li>
+            <li>Error (Fail)</li>
+            <li>Timbre de Puerta</li>
+            <li>¡Sorpresa!</li>
+            <li>Ding (Acertado)</li>
+            <li>Whoosh (Pase rápido)</li>
+            <li>Archivo Personalizado (si se configura)</li>
+        </ul>
+        <div class="highlight">
+            <strong>Nota:</strong> Al hacer clic por primera vez, el navegador puede solicitar permiso para reproducir audio. Acepte para habilitar el sonido.
+        </div>
+
+        <h4 class="text-lg font-semibold mb-2">3.3. Mensajes de Estado</h4>
+        <p class="mb-4">
+            En la parte inferior de la pantalla aparecerán mensajes temporales indicando el estado de las acciones, como "Sistema de Audio Iniciado" o "Reproduciendo: [Nombre del Sonido]".
+        </p>
+    </div>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">4. Configuración de la Aplicación</h3>
+
+        <h4 class="text-lg font-semibold mb-2">4.1. Abrir el Modal de Configuración</h4>
+        <p class="mb-4">
+            Haga clic en el botón <strong>"⚙️ Configurar Sonidos"</strong> en la parte superior de la página. Se abrirá un modal con opciones de configuración para cada botón.
+        </p>
+
+        <h4 class="text-lg font-semibold mb-2">4.2. Personalizar Etiquetas</h4>
+        <p class="mb-4">
+            Para cada botón, puede cambiar la etiqueta (nombre) en el campo de texto correspondiente. Esto cambiará el texto que aparece en el botón.
+        </p>
+
+        <h4 class="text-lg font-semibold mb-2">4.3. Seleccionar Sonidos Predefinidos</h4>
+        <p class="mb-4">
+            Use el menú desplegable para seleccionar un sonido predefinido diferente para cada botón. Los presets disponibles se listan en la sección 3.2.
+        </p>
+
+        <h4 class="text-lg font-semibold mb-2">4.4. Cargar Archivos de Audio Personalizados</h4>
+        <p class="mb-4">
+            Seleccione "Archivo Personalizado" en el menú desplegable de un botón. Aparecerá un campo para cargar un archivo de audio.
+        </p>
+        <ol class="list-decimal list-inside mb-4">
+            <li>Haga clic en "Seleccionar archivo" y elija un archivo de audio (MP3, WAV, etc.) de su dispositivo.</li>
+            <li>El archivo se cargará automáticamente. Aparecerá un mensaje confirmando la carga.</li>
+            <li>Límite de tamaño: 5 MB por archivo. Archivos más grandes pueden no guardarse correctamente.</li>
+        </ol>
+        <div class="highlight">
+            <strong>Importante:</strong> Los archivos personalizados se almacenan en el navegador. Si borra el caché o cambia de navegador, se perderán. Guarde copias de seguridad de sus archivos originales.
+        </div>
+
+        <h4 class="text-lg font-semibold mb-2">4.5. Guardar Configuración</h4>
+        <p class="mb-4">
+            Después de realizar cambios, haga clic en <strong>"Guardar Configuración"</strong>. Los cambios se aplicarán inmediatamente y se guardarán en el navegador para futuras sesiones.
+        </p>
+        <p class="mb-4">
+            Si no guarda, los cambios se perderán al cerrar el modal o recargar la página.
+        </p>
+
+        <h4 class="text-lg font-semibold mb-2">4.6. Cerrar Configuración</h4>
+        <p class="mb-4">
+            Haga clic en <strong>"Cerrar"</strong> para salir del modal sin guardar cambios, o use "Guardar Configuración" para aplicar y cerrar.
+        </p>
+    </div>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">5. Solución de Problemas</h3>
+        <ul class="list-disc list-inside">
+            <li><strong>No se reproduce sonido:</strong> Verifique que el navegador tenga permisos de audio habilitados. Intente hacer clic en cualquier parte de la página para activar el audio.</li>
+            <li><strong>Archivo personalizado no se carga:</strong> Asegúrese de que el archivo sea un formato de audio válido (MP3, WAV, etc.) y no exceda 5 MB.</li>
+            <li><strong>Configuración no se guarda:</strong> Verifique que localStorage esté habilitado en su navegador. En modo incógnito, los datos pueden no persistir.</li>
+            <li><strong>Página no carga correctamente:</strong> Asegúrese de tener conexión a internet para cargar las librerías externas. Si persiste, intente recargar la página.</li>
+            <li><strong>Errores en consola:</strong> Abra las herramientas de desarrollador del navegador (F12) y revise la consola para mensajes de error detallados.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">6. Consejos y Mejores Prácticas</h3>
+        <ul class="list-disc list-inside">
+            <li>Experimente con diferentes combinaciones de sonidos para crear efectos personalizados.</li>
+            <li>Use archivos de audio cortos (menos de 1 MB) para un mejor rendimiento.</li>
+            <li>Guarde su configuración regularmente para evitar perder cambios.</li>
+            <li>La aplicación es responsiva y funciona en dispositivos móviles, pero el audio puede requerir interacción táctil inicial.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h3 class="text-xl font-bold mb-4">7. Información Técnica</h3>
+        <p class="mb-4">
+            Esta aplicación utiliza:
+        </p>
+        <ul class="list-disc list-inside">
+            <li><strong>Tone.js:</strong> Librería para síntesis y reproducción de audio.</li>
+            <li><strong>Tailwind CSS:</strong> Framework para estilos responsivos.</li>
+            <li><strong>localStorage:</strong> Para almacenamiento local de configuraciones.</li>
+            <li><strong>FileReader API:</strong> Para cargar archivos de audio personalizados.</li>
+        </ul>
+    </div>
+
+    <footer class="text-center mt-8 text-gray-600">
+        <p>&copy; 2023 Control de Sonidos. Desarrollado con tecnologías web modernas.</p>
+        <p>Para soporte adicional, consulte la documentación técnica o contacte al desarrollador.</p>
+    </footer>
+
+</body>
+</html>
