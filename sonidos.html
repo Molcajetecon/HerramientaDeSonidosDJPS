@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Sonidos</title>
+    <!-- Carga de Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la librería Tone.js para la generación de audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* Estilos personalizados para la sensación de la app */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* Fondo oscuro */
+        }
+        .sound-button {
+            transition: transform 0.1s, box-shadow 0.1s;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px; /* Altura mínima para botones grandes en móvil */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+        }
+        .sound-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+        }
+        .button-label {
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+        .modal {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="min-h-screen p-4 flex flex-col items-center">
+        <!-- Encabezado -->
+        <header class="w-full max-w-lg mb-6">
+            <h1 class="text-3xl font-extrabold text-white text-center mt-4">
+                Control de Sonidos
+            </h1>
+            <p class="text-gray-400 text-center mb-4">¡Presiona un botón para hacer ruido!</p>
+            
+            <!-- Botón de Configuración -->
+            <button id="config-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl transition duration-200 shadow-lg mt-2">
+                ⚙️ Configurar Sonidos
+            </button>
+        </header>
+
+        <!-- Grid de Botones de Sonido -->
+        <main id="sound-grid" class="w-full max-w-lg grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+            <!-- Los botones se insertarán aquí con JavaScript -->
+        </main>
+
+        <!-- Mensaje de estado/información -->
+        <div id="message-box" class="fixed bottom-0 left-0 right-0 p-4 bg-yellow-500 text-gray-900 text-center font-semibold rounded-t-xl hidden">
+            <!-- Los mensajes temporales aparecerán aquí -->
+        </div>
+    </div>
+
+    <!-- Modal de Configuración -->
+    <div id="config-modal" class="modal fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 class="text-2xl font-bold text-white mb-4">Configurar Botones</h2>
+            <div id="config-form" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <!-- Los campos de configuración se insertarán aquí -->
+            </div>
+            
+            <button id="save-config-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl transition duration-200 mt-6">
+                Guardar Configuración
+            </button>
+            <button id="close-modal-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl transition duration-200 mt-3">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN Y ESTADO INICIAL ---
+
+        // 1. Catálogo de sonidos predefinidos (Presets). El color ya no se usa para el botón.
+        const SOUND_PRESETS = [
+            { id: 'laugh', label: "Risa 'Mala'", soundType: "synth", config: { note: "C5", duration: "8n", type: "triangle" } },
+            { id: 'horn', label: "Bocina Fuerte", soundType: "noise", config: { type: "white", volume: -5, duration: 0.5 } },
+            { id: 'applause', label: "Aplausos (Clap)", soundType: "metal", config: { frequency: 200, volume: -10 } },
+            { id: 'fail', label: "Error (Fail)", soundType: "synth", config: { note: "D3", duration: "2n", type: "sawtooth" } },
+            { id: 'doorbell', label: "Timbre de Puerta", soundType: "duosynth", config: { note: "G4", duration: "4n" } },
+            { id: 'surprise', label: "¡Sorpresa!", soundType: "duosynth", config: { note: "C6", duration: "4n" } },
+            { id: 'ding', label: "Ding (Acertado)", soundType: "synth", config: { note: "E5", duration: "16n", type: "sine" } },
+            { id: 'whoosh', label: "Whoosh (Pase rápido)", soundType: "noise", config: { type: "pink", volume: -8, duration: 0.3 } },
+            // NUEVO: Placeholder para audio cargado
+            { id: 'custom', label: "Archivo Personalizado", soundType: "file" }, 
+        ];
+        
+        // 2. Configuración por defecto de los botones (referencia a los IDs de los presets)
+        const DEFAULT_BUTTON_CONFIG = [
+            // AÑADIDO: La propiedad 'color' es fija por botón.
+            { id: 1, label: "Risa ", presetId: 'laugh', audioData: null, color: "bg-red-500" },
+            { id: 2, label: "Bocina", presetId: 'horn', audioData: null, color: "bg-yellow-500" },
+            { id: 3, label: "Aplausos", presetId: 'applause', audioData: null, color: "bg-green-500" },
+            { id: 4, label: "Error", presetId: 'fail', audioData: null, color: "bg-purple-500" },
+            { id: 5, label: "Timbre", presetId: 'doorbell', audioData: null, color: "bg-blue-500" },
+            { id: 6, label: "¡Wiii!", presetId: 'surprise', audioData: null, color: "bg-pink-500" },
+            { id: 7, label: "extra", presetId: 'doorbell', audioData: null, color: "bg-red-300" },
+            { id: 8, label: "Estra2!", presetId: 'surprise', audioData: null, color: "bg-yellow-800" },
+            { id: 9, label: "Aplausos2", presetId: 'applause', audioData: null, color: "bg-orange-500" },
+        ];
+
+        // Obtener la configuración guardada o usar la por defecto
+        let soundConfig = loadConfig();
+
+        // Helper para obtener la configuración completa del sonido a partir de su ID de preset
+        function getSoundData(presetId) {
+            return SOUND_PRESETS.find(p => p.id === presetId) || SOUND_PRESETS[0]; // Fallback al primer preset
+        }
+
+        // Inicializar Tone.js (requerido para que el audio funcione)
+        const initAudio = () => {
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+                showMessage('Sistema de Audio Iniciado.', 'bg-green-500');
+            }
+        };
+
+        // --- FUNCIONES DE ALMACENAMIENTO (Simulación de Configuración) ---
+
+        function loadConfig() {
+            try {
+                const savedConfig = localStorage.getItem('soundboardConfig');
+                if (savedConfig) {
+                    const parsedConfig = JSON.parse(savedConfig);
+                    return DEFAULT_BUTTON_CONFIG.map(defaultButton => {
+                        const saved = parsedConfig.find(s => s.id === defaultButton.id) || {};
+                        
+                        // Asegura que tenga un presetId válido o usa el por defecto
+                        const presetId = getSoundData(saved.presetId) ? saved.presetId : defaultButton.presetId;
+                        // Carga también los datos de audio y color guardados
+                        const audioData = saved.audioData || null; 
+                        const color = saved.color || defaultButton.color; // Usa el color guardado o el color por defecto
+                        
+                        return { 
+                            ...defaultButton, 
+                            ...saved, 
+                            presetId, 
+                            audioData,
+                            color
+                        };
+                    });
+                }
+            } catch (error) {
+                console.error("Error al cargar configuración, usando valores por defecto.", error);
+            }
+            return DEFAULT_BUTTON_CONFIG;
+        }
+
+        function saveConfig() {
+            try {
+                // Se guardan todos los datos de la configuración del botón (incluyendo color, etiqueta y presetId)
+                localStorage.setItem('soundboardConfig', JSON.stringify(soundConfig));
+                showMessage('Configuración Guardada con Éxito.', 'bg-green-500');
+            } catch (error) {
+                console.error("Error al guardar configuración.", error);
+                showMessage('Error al Guardar Configuración. El archivo podría ser demasiado grande.', 'bg-red-500');
+            }
+        }
+
+        // --- LÓGICA DE CARGA DE ARCHIVOS ---
+
+        function handleFileSelection(event) {
+            const file = event.target.files[0];
+            const buttonId = parseInt(event.target.dataset.id);
+            
+            if (!file) return;
+
+            // Límite de tamaño (aprox 5MB) para evitar llenar localStorage
+            const MAX_SIZE = 5 * 1024 * 1024; 
+            if (file.size > MAX_SIZE) {
+                showMessage('¡Advertencia! El archivo es demasiado grande (> 5MB). Podría no guardarse correctamente.', 'bg-orange-500');
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const audioData = e.target.result;
+                const buttonToUpdate = soundConfig.find(b => b.id === buttonId);
+                
+                if (buttonToUpdate) {
+                    buttonToUpdate.audioData = audioData;
+                    showMessage(`Archivo cargado para el Botón ${buttonId}. ¡Recuerda GUARDAR!`, 'bg-blue-500');
+                }
+            };
+            reader.onerror = function() {
+                showMessage('Error al leer el archivo.', 'bg-red-500');
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // --- FUNCIONES DE AUDIO CON TONE.JS ---
+
+        // Función para crear y reproducir sonidos basados en la configuración del botón
+        function playSound(buttonConfig) {
+            initAudio(); // Asegura que el audio esté activo
+            
+            // Caso 1: Archivo Personalizado
+            if (buttonConfig.presetId === 'custom' && buttonConfig.audioData) {
+                showMessage(`Reproduciendo archivo: ${buttonConfig.label}`, 'bg-purple-500');
+                try {
+                    // Usamos Tone.Player para reproducir el Base64 Audio Data
+                    const player = new Tone.Player(buttonConfig.audioData).toDestination();
+                    player.autostart = true;
+                } catch (e) {
+                    console.error("Error al reproducir el archivo de audio:", e);
+                    showMessage("Error al reproducir el archivo. ¿Es un formato de audio válido?", 'bg-red-500');
+                }
+                return;
+            }
+
+            // Caso 2: Sonido Sintetizado (Presets)
+            const sound = getSoundData(buttonConfig.presetId); 
+
+            // Crea un objeto de volumen (Gain) para controlar el nivel
+            const volumeValue = (sound.config?.volume !== undefined ? sound.config.volume / 10 : 0); 
+            const gain = new Tone.Gain(Tone.dbToGain(volumeValue)).toDestination();
+
+            switch (sound.soundType) {
+                case "synth":
+                    const synth = new Tone.Synth({ 
+                        oscillator: { type: sound.config.type || 'square' } 
+                    }).connect(gain);
+                    synth.triggerAttackRelease(sound.config.note || "C4", sound.config.duration || "4n");
+                    break;
+                case "noise":
+                    const noise = new Tone.Noise(sound.config.type || 'white').connect(gain).start();
+                    noise.volume.value = sound.config.volume || -10;
+                    noise.stop(Tone.context.currentTime + (sound.config.duration || 0.1)); 
+                    break;
+                case "metal":
+                    const metal = new Tone.MetalSynth({
+                        frequency: sound.config.frequency || 200,
+                        envelope: { decay: 0.8 },
+                    }).connect(gain).triggerAttackRelease("4n");
+                    break;
+                case "duosynth":
+                    const duo = new Tone.DuoSynth().connect(gain);
+                    duo.triggerAttackRelease(sound.config.note || "C4", sound.config.duration || "4n");
+                    break;
+                default:
+                    showMessage(`Tipo de sonido desconocido: ${sound.soundType}`, 'bg-red-500');
+                    break;
+            }
+            showMessage(`Reproduciendo: ${buttonConfig.label}`, 'bg-cyan-500');
+        }
+
+        // --- FUNCIONES DE UI Y RENDERIZADO ---
+
+        // Muestra un mensaje temporal en la parte inferior de la pantalla
+        let messageTimeout;
+        function showMessage(text, bgColorClass) {
+            const box = document.getElementById('message-box');
+            box.textContent = text;
+            box.className = `fixed bottom-0 left-0 right-0 p-4 text-white text-center font-semibold rounded-t-xl z-40 ${bgColorClass}`;
+            box.classList.remove('hidden');
+
+            clearTimeout(messageTimeout);
+            messageTimeout = setTimeout(() => {
+                box.classList.add('hidden');
+            }, 3000);
+        }
+
+        // RENDERIZADO DE BOTONES
+        function renderButtons() {
+            const grid = document.getElementById('sound-grid');
+            grid.innerHTML = ''; // Limpia el contenido anterior
+
+            soundConfig.forEach(buttonConfig => {
+                
+                // *** CAMBIO CLAVE: Usamos el color fijo guardado en buttonConfig.color ***
+                const buttonColor = buttonConfig.color;
+
+                const button = document.createElement('button');
+                // Usa el color fijo del botón
+                button.className = `sound-button ${buttonColor} text-white rounded-xl shadow-xl hover:opacity-90`;
+                button.dataset.id = buttonConfig.id;
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.536 4.464a.5.5 0 01.708 0l.707.707a.5.5 0 010 .708L14.414 10l1.537 1.536a.5.5 0 010 .708l-.707.707a.5.5 0 01-.708 0L13 11.414l-1.536 1.537a.5.5 0 01-.708 0l-.707-.707a.5.5 0 010-.708L11.586 10l-1.537-1.536a.5.5 0 010-.708l.707-.707a.5.5 0 01.708 0L13 8.586l1.536-1.537a.5.5 0 01.708 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="button-label">${buttonConfig.label}</span>
+                `;
+                
+                // Pasa el objeto de configuración del botón al reproductor de sonido
+                button.addEventListener('click', () => playSound(buttonConfig)); 
+                grid.appendChild(button);
+            });
+        }
+
+        // RENDERIZADO DEL MODAL DE CONFIGURACIÓN
+        function renderConfigModal() {
+            const form = document.getElementById('config-form');
+            form.innerHTML = '';
+            
+            soundConfig.forEach(buttonConfig => { 
+                const currentPreset = getSoundData(buttonConfig.presetId); 
+                
+                // Generar opciones para el dropdown de sonidos
+                let optionsHtml = '';
+                SOUND_PRESETS.forEach(preset => {
+                    const selected = preset.id === buttonConfig.presetId ? 'selected' : '';
+                    optionsHtml += `<option value="${preset.id}" ${selected}>${preset.label}</option>`;
+                });
+
+                const div = document.createElement('div');
+                div.className = "p-3 bg-gray-700 rounded-lg";
+                
+                // 1. Etiqueta (Label)
+                let innerHtml = `
+                    <label for="label-${buttonConfig.id}" class="block text-sm font-medium text-gray-300">Etiqueta del Botón ${buttonConfig.id} <span class="${buttonConfig.color} text-white px-2 py-0.5 rounded-full text-xs">Color Fijo</span></label>
+                    <input type="text" id="label-${buttonConfig.id}" 
+                           value="${buttonConfig.label}" 
+                           data-id="${buttonConfig.id}" 
+                           data-field="label"
+                           class="mt-1 block w-full rounded-md border-gray-600 shadow-sm p-2 bg-gray-900 text-white focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Nombre del sonido">
+                `;
+
+                // 2. Selector de Preset
+                innerHtml += `
+                    <label for="preset-${buttonConfig.id}" class="block text-sm font-medium text-gray-300 mt-3">Seleccionar Sonido (Actual: ${currentPreset.label})</label>
+                    <select id="preset-${buttonConfig.id}"
+                            data-id="${buttonConfig.id}"
+                            data-field="presetId"
+                            class="mt-1 block w-full rounded-md border-gray-600 shadow-sm p-2 bg-gray-900 text-white focus:ring-blue-500 focus:border-blue-500 preset-select">
+                        ${optionsHtml}
+                    </select>
+                `;
+                
+                // 3. Contenedor para la carga de archivos (se muestra solo si se selecciona 'custom')
+                const fileName = buttonConfig.audioData ? (buttonConfig.audioData.length > 50 ? "Archivo cargado" : "Datos de audio") : "Ninguno";
+                innerHtml += `
+                    <div id="file-upload-container-${buttonConfig.id}" class="mt-3 p-3 border-2 border-dashed rounded-lg ${buttonConfig.presetId === 'custom' ? '' : 'hidden'}">
+                        <label for="file-${buttonConfig.id}" class="block text-sm font-medium text-gray-300 mb-2">Cargar archivo de audio (MP3/WAV, etc.):</label>
+                        <input type="file" id="file-${buttonConfig.id}" 
+                               data-id="${buttonConfig.id}"
+                               accept="audio/*"
+                               class="block w-full text-sm text-gray-400 file-input">
+                        <p class="text-xs text-gray-400 mt-1">Archivo actual: <span class="font-bold text-yellow-300">${fileName}</span></p>
+                    </div>
+                `;
+
+                div.innerHTML = innerHtml;
+                form.appendChild(div);
+            });
+
+            // Agrega listeners para el manejo de archivos y el cambio de selector
+            document.querySelectorAll('.file-input').forEach(input => {
+                input.addEventListener('change', handleFileSelection);
+            });
+
+            document.querySelectorAll('.preset-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const id = e.target.dataset.id;
+                    const container = document.getElementById(`file-upload-container-${id}`);
+                    
+                    if (e.target.value === 'custom') {
+                        container.classList.remove('hidden');
+                    } else {
+                        container.classList.add('hidden');
+                        // Opcional: Limpiar audioData si se cambia a un preset sintetizado
+                        const buttonToUpdate = soundConfig.find(b => b.id === parseInt(id));
+                        if (buttonToUpdate) {
+                            buttonToUpdate.audioData = null;
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- MANEJADORES DE EVENTOS ---
+
+        document.getElementById('config-btn').addEventListener('click', () => {
+            renderConfigModal();
+            document.getElementById('config-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('config-modal').classList.add('hidden');
+            // Re-renderizar botones para restaurar el estado si no se guardó
+            renderButtons(); 
+        });
+
+        document.getElementById('save-config-btn').addEventListener('click', () => {
+            const elements = document.querySelectorAll('#config-form input[data-field="label"], #config-form select[data-field="presetId"]');
+            
+            elements.forEach(element => {
+                const id = parseInt(element.dataset.id);
+                const field = element.dataset.field;
+                const value = element.value.trim();
+                
+                const buttonToUpdate = soundConfig.find(b => b.id === id);
+                
+                if (buttonToUpdate) {
+                    if (field === 'label') {
+                        buttonToUpdate.label = value || `Botón ${id}`;
+                    } else if (field === 'presetId') {
+                        buttonToUpdate.presetId = value;
+                        // Si cambia de 'custom' a otra cosa, limpiamos los datos de audio guardados
+                        if (value !== 'custom') {
+                            buttonToUpdate.audioData = null;
+                        }
+                    }
+                }
+            });
+
+            saveConfig();
+            renderButtons(); 
+            document.getElementById('config-modal').classList.add('hidden');
+        });
+
+        // --- INICIALIZACIÓN ---
+        
+        // Se llama al cargar la página para dibujar los botones
+        window.onload = () => {
+            renderButtons();
+            
+            // Listener para inicializar el audio al primer toque, si es necesario
+            document.body.addEventListener('click', initAudio, { once: true });
+        };
+        // --- Gracias por usar la herramienta de sonidos
+    </script>
+</body>
+</html>
